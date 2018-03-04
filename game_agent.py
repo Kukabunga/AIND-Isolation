@@ -35,7 +35,7 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    return float(len(game.get_legal_moves(player)))
 
 
 def custom_score_2(game, player):
@@ -61,7 +61,8 @@ def custom_score_2(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    opponent_moves = game.get_legal_moves(game.get_opponent(player))
+    return float(len(game.get_legal_moves(player)) - len(opponent_moves))
 
 
 def custom_score_3(game, player):
@@ -87,7 +88,8 @@ def custom_score_3(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    opponent_moves = game.get_legal_moves(game.get_opponent(player))
+    return float(len(game.get_legal_moves(player)) - 3 * len(opponent_moves))
 
 
 class IsolationPlayer:
@@ -342,3 +344,36 @@ class AlphaBetaPlayer(IsolationPlayer):
 
         # TODO: finish this function!
         raise NotImplementedError
+    
+    def terminal(depth):
+        return depth == 0
+
+    def max_value(state, depth, alpha, beta):
+        if self.terminal(depth):
+            return self.score(state, self)
+        v = float("-inf")
+
+        for s in state.get_legal_moves():
+            vhat = self.min_value(s.forecast_move(s), depth - 1, alpha, beta)
+            if vhat > v:
+                v = vhat
+            if vhat >= beta:
+                return v
+            if vhat >= alpha:
+                a = vhat
+        return v
+
+    def min_value(state, depth, alpha, beta):
+        if self.terminal(depth):
+            return self.score(state, self)
+        v = float("inf")
+
+        for s in state.get_legal_moves():
+            vhat = self.max_value(s.forecast_move(s), depth - 1, alpha, beta)
+            if vhat < v:
+                v = vhat
+            if vhat <= alpha:
+                return v
+            if vhat < beta:
+                b = vhat
+        return v

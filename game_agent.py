@@ -34,7 +34,6 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
     return float(len(game.get_legal_moves(player)))
 
 
@@ -60,7 +59,6 @@ def custom_score_2(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
     opponent_moves = game.get_legal_moves(game.get_opponent(player))
     return float(len(game.get_legal_moves(player)) - len(opponent_moves))
 
@@ -87,7 +85,6 @@ def custom_score_3(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
     opponent_moves = game.get_legal_moves(game.get_opponent(player))
     return float(len(game.get_legal_moves(player)) - 3 * len(opponent_moves))
 
@@ -114,6 +111,7 @@ class IsolationPlayer:
         positive value large enough to allow the function to return before the
         timer expires.
     """
+
     def __init__(self, search_depth=3, score_fn=custom_score, timeout=10.):
         self.search_depth = search_depth
         self.score = score_fn
@@ -217,6 +215,9 @@ class MinimaxPlayer(IsolationPlayer):
         return self.best_move(game, depth)
 
     def best_move(self, board, depth):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
         b_score = float("-inf")
         b_move = (-1, -1)
 
@@ -225,7 +226,7 @@ class MinimaxPlayer(IsolationPlayer):
             return b_move
         else:
             b_move = moves[0]
-        
+
         for move in moves:
             state = board.forecast_move(move)
             score = self.min_value(state, depth - 1)
@@ -233,25 +234,32 @@ class MinimaxPlayer(IsolationPlayer):
                 b_move = move
                 b_score = score
         return b_move
-    
+
     def min_value(self, state, depth):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
         if depth == 0:
             return self.score(state, self)
 
-        score = float("-inf")
-        for move in state.get_legal_moves(state.active_player):
+        score = float("inf")
+        for move in state.get_legal_moves():
             score = min(score, self.max_value(state.forecast_move(move), depth - 1))
         return score
-    
+
     def max_value(self, state, depth):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
         if depth == 0:
             return self.score(state, self)
 
         score = float("-inf")
 
-        for move in state.get_legal_moves(state.active_player):
+        for move in state.get_legal_moves():
             score = max(score, self.min_value(state.forecast_move(move), depth - 1))
         return score
+
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
@@ -291,8 +299,21 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        b_move = (-1, -1)
+        legal_moves = game.get_legal_moves()
+        if not legal_moves:
+            return b_move
+
+        try:
+            depth = self.search_depth
+            while True:
+                depth += 1
+                b_move = self.alphabeta(game, depth)
+        except SearchTimeout:
+            print('SearchTimout exception')
+            pass
+
+        return b_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -342,38 +363,57 @@ class AlphaBetaPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
-    
-    def terminal(depth):
+        b_score = float("-inf")
+        legal_moves = game.get_legal_moves()
+
+        if not legal_moves:
+            return game.utility(self)
+        else:
+            b_move = legal_moves[0]
+
+        for move in legal_moves:
+            score = self.min_value(game.forecast_move(move), depth - 1, alpha, beta)
+            if score > b_score:
+                b_score = score
+                b_move = move
+            alpha = max(alpha, b_score)
+
+        return b_move
+
+    def terminal(self, depth):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
         return depth == 0
 
-    def max_value(state, depth, alpha, beta):
+    def max_value(self, state, depth, alpha, beta):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
         if self.terminal(depth):
             return self.score(state, self)
-        v = float("-inf")
 
-        for s in state.get_legal_moves():
-            vhat = self.min_value(s.forecast_move(s), depth - 1, alpha, beta)
-            if vhat > v:
-                v = vhat
-            if vhat >= beta:
+        v = float("-inf")
+        for move in state.get_legal_moves():
+            vhat = self.min_value(state.forecast_move(move), depth - 1, alpha, beta)
+            v = max(v, vhat)
+            if v >= beta:
                 return v
-            if vhat >= alpha:
-                a = vhat
+            alpha = max(alpha, v)
         return v
 
-    def min_value(state, depth, alpha, beta):
+    def min_value(self, state, depth, alpha, beta):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
         if self.terminal(depth):
             return self.score(state, self)
-        v = float("inf")
 
-        for s in state.get_legal_moves():
-            vhat = self.max_value(s.forecast_move(s), depth - 1, alpha, beta)
-            if vhat < v:
-                v = vhat
-            if vhat <= alpha:
+        v = float("inf")
+        for move in state.get_legal_moves():
+            vhat = self.max_value(state.forecast_move(move), depth - 1, alpha, beta)
+            v = min(v, vhat)
+            if v <= alpha:
                 return v
-            if vhat < beta:
-                b = vhat
+            beta = min(beta, v)
         return v

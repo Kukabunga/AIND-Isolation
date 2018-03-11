@@ -3,6 +3,7 @@ test your agent's strength against a set of known agents using tournament.py
 and include the results in your report.
 """
 import random
+import math
 
 
 class SearchTimeout(Exception):
@@ -11,82 +12,34 @@ class SearchTimeout(Exception):
 
 
 def custom_score(game, player):
-    """Calculate the heuristic value of a game state from the point of view
-    of the given player.
+    if game.is_loser(player):
+        return float("-inf")
 
-    This should be the best heuristic function for your project submission.
+    if game.is_winner(player):
+        return float("inf")
 
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
-
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
-
-    Returns
-    -------
-    float
-        The heuristic value of the current game state to the specified player.
-    """
     return float(len(game.get_legal_moves(player)))
 
 
 def custom_score_2(game, player):
-    """Calculate the heuristic value of a game state from the point of view
-    of the given player.
+    if game.is_loser(player):
+        return float("-inf")
 
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
+    if game.is_winner(player):
+        return float("inf")
 
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
-
-    Returns
-    -------
-    float
-        The heuristic value of the current game state to the specified player.
-    """
     opponent_moves = game.get_legal_moves(game.get_opponent(player))
     return float(len(game.get_legal_moves(player)) - len(opponent_moves))
 
 
 def custom_score_3(game, player):
-    """Calculate the heuristic value of a game state from the point of view
-    of the given player.
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    d = float((h - y) ** 2 + (w - x) ** 2)
 
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
-
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
-
-    Returns
-    -------
-    float
-        The heuristic value of the current game state to the specified player.
-    """
-    opponent_moves = game.get_legal_moves(game.get_opponent(player))
-    return float(len(game.get_legal_moves(player)) - 3 * len(opponent_moves))
+    y_, x_ = game.get_player_location(game.get_opponent(player))
+    d_ = float((h - y_) ** 2 + (w - x_) ** 2)
+    return float(0.1 * (math.sqrt((math.fabs(d - d_)**2 / (d + d_)))))
 
 
 class IsolationPlayer:
@@ -310,7 +263,6 @@ class AlphaBetaPlayer(IsolationPlayer):
                 depth += 1
                 b_move = self.alphabeta(game, depth)
         except SearchTimeout:
-            print('SearchTimout exception')
             pass
 
         return b_move
